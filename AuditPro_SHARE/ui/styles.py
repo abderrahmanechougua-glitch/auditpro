@@ -93,6 +93,7 @@ QPushButton#ModuleButton {{
     border: none;
     border-radius: 8px;
     padding: 10px 16px;
+    min-height: 18px;
     text-align: left;
     font-size: 13px;
 }}
@@ -107,6 +108,10 @@ QPushButton#ModuleButton:checked {{
     color: white;
     font-weight: bold;
     border-left: 3px solid {c['primary_dark']};
+}}
+
+QPushButton#ModuleButton:focus {{
+    border: 2px solid {c['primary_light']};
 }}
 
 /* ── Zone centrale (Workspace) ───────────────────────── */
@@ -163,6 +168,10 @@ QPushButton#StepButton:hover {{
 
 QPushButton#StepButton:pressed {{
     background-color: {c['drop_active']};
+}}
+
+QPushButton#StepButton:focus {{
+    border: 2px solid {c['primary_light']};
 }}
 
 QPushButton#StepButton:checked {{
@@ -276,6 +285,7 @@ QPushButton#PrimaryButton {{
     font-size: 14px;
     font-weight: bold;
     min-width: 140px;
+    min-height: 38px;
 }}
 
 QPushButton#PrimaryButton:hover {{
@@ -305,6 +315,7 @@ QPushButton#SecondaryButton {{
     padding: 9px 24px;
     font-size: 13px;
     font-weight: bold;
+    min-height: 36px;
 }}
 
 QPushButton#SecondaryButton:hover {{
@@ -575,9 +586,10 @@ QLineEdit, QComboBox, QSpinBox, QDateEdit {{
     padding: 8px 12px;
     background-color: {c['bg_panel']};
     font-size: 13px;
+    min-height: 20px;
 }}
 
-QLineEdit:focus, QComboBox:focus {{
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDateEdit:focus {{
     border-color: {c['primary']};
     background-color: #FFFFFF;
 }}
