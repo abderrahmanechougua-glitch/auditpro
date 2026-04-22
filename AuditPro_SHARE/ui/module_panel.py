@@ -38,7 +38,7 @@ class ModulePanel(QWidget):
         # ── Séparateur ────────────────────────────────
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("color: #3A1F54; margin: 0 16px;")
+        sep.setStyleSheet("color: #E5E7EB; margin: 0 16px;")
         layout.addWidget(sep)
 
         # ── Section label ─────────────────────────────

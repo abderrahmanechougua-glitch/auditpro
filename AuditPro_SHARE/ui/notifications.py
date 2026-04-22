@@ -43,11 +43,11 @@ class Toast(QWidget):
     action_triggered = pyqtSignal()
 
     COLORS = {
-        NotificationType.INFO: {"bg": "#E3F2FD", "text": "#1565C0", "border": "#90CAF9", "accent": "#1565C0"},
-        NotificationType.SUCCESS: {"bg": "#E8F5E9", "text": "#2E7D32", "border": "#81C784", "accent": "#2E7D32"},
-        NotificationType.WARNING: {"bg": "#FFF3E0", "text": "#E65100", "border": "#FFB74D", "accent": "#E65100"},
-        NotificationType.ERROR: {"bg": "#FFEBEE", "text": "#C62828", "border": "#EF5350", "accent": "#C62828"},
-        NotificationType.PROGRESS: {"bg": "#F3E5F5", "text": "#6A1B9A", "border": "#BA68C8", "accent": "#6A1B9A"},
+        NotificationType.INFO: {"bg": "#FDF4FF", "text": "#A855C1", "border": "#F5D0FE", "accent": "#B882EE"},
+        NotificationType.SUCCESS: {"bg": "#ECFDF5", "text": "#047857", "border": "#A7F3D0", "accent": "#10B981"},
+        NotificationType.WARNING: {"bg": "#FFFBEB", "text": "#B45309", "border": "#FDE68A", "accent": "#F59E0B"},
+        NotificationType.ERROR: {"bg": "#FEF2F2", "text": "#B91C1C", "border": "#FECACA", "accent": "#EF4444"},
+        NotificationType.PROGRESS: {"bg": "#FDF4FF", "text": "#A855C1", "border": "#F5D0FE", "accent": "#B882EE"},
     }
 
     ICONS = {
@@ -202,6 +202,8 @@ class Toast(QWidget):
         timer.start(self.config.duration)
 
     def show_animated(self, target_geometry: QRect):
+        if self._closing:
+            return
         start_geometry = QRect(
             target_geometry.x() + 24,
             target_geometry.y(),
@@ -217,18 +219,28 @@ class Toast(QWidget):
         self.animation_in.start()
 
     def move_animated(self, target_geometry: QRect):
+        if self._closing:
+            return
         self.animation_in.stop()
         self.animation_in.setStartValue(self.geometry())
         self.animation_in.setEndValue(target_geometry)
         self.animation_in.start()
 
     def update_message(self, message: str):
+        if self._closing:
+            return
         self.message_label.setText(message)
         self.adjustSize()
 
     def set_progress(self, value: int):
+        if self._closing:
+            return
         if self.progress_bar is not None:
             self.progress_bar.setValue(max(0, min(100, value)))
+
+    @property
+    def is_closing(self) -> bool:
+        return self._closing
 
     def dismiss(self):
         if self._closing:
@@ -325,6 +337,8 @@ class NotificationManager(QWidget):
         available_width = max(320, parent.width() - self.margin_right)
 
         for notification in list(self.notifications):
+            if notification.is_closing:
+                continue
             notification.adjustSize()
             width = min(notification.width(), available_width)
             height = notification.height()

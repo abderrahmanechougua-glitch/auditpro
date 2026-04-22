@@ -49,7 +49,7 @@ class AssistantPanel(QWidget):
         # ── Séparateur ────────────────────────────────
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("color: #DEE2E6; margin: 8px 16px;")
+        sep.setStyleSheet("color: #E5E7EB; margin: 8px 16px;")
         layout.addWidget(sep)
 
         # ── Aide module ───────────────────────────────

@@ -77,9 +77,6 @@ class Workspace(QWidget):
         self.drop_feedback.setVisible(False)
         main_layout.addWidget(self.drop_feedback)
 
-        self.state_strip = self._build_state_strip()
-        main_layout.addWidget(self.state_strip)
-
         # ── Scroll area pour le contenu ───────────────
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -135,7 +132,7 @@ class Workspace(QWidget):
         output_row = QHBoxLayout()
         self.output_line = QLineEdit()
         self.output_line.setPlaceholderText("Laisser vide pour automatique...")
-        self.output_line.setStyleSheet("color: #000000;")
+        self.output_line.setStyleSheet("color: #1F2937;")
         self.output_line.setReadOnly(True)
         output_row.addWidget(self.output_line, 1)
 
@@ -193,7 +190,7 @@ class Workspace(QWidget):
 
         self.progress_message = QLabel("")
         self.progress_message.setVisible(False)
-        self.progress_message.setStyleSheet("color: #6C757D; font-size: 12px;")
+        self.progress_message.setStyleSheet("color: #6B7280; font-size: 12px;")
         self.content_layout.addWidget(self.progress_message)
 
         # ── Résultat ──────────────────────────────────
@@ -214,56 +211,14 @@ class Workspace(QWidget):
         self._refresh_workspace_state()
 
     def _build_state_strip(self) -> QFrame:
+        # Barre d'état supprimée (demande utilisateur).
         strip = QFrame()
-        strip.setObjectName("WorkspaceStateStrip")
-        layout = QHBoxLayout(strip)
-        layout.setContentsMargins(8, 6, 8, 6)
-        layout.setSpacing(8)
-
-        self.state_loaded_files = QLabel("Fichiers: 0")
-        self.state_loaded_files.setObjectName("WorkspaceStateChip")
-        layout.addWidget(self.state_loaded_files)
-
-        self.state_active_step = QLabel("Étape: —")
-        self.state_active_step.setObjectName("WorkspaceStateChip")
-        layout.addWidget(self.state_active_step)
-
-        self.state_preview_status = QLabel("Aperçu: non généré")
-        self.state_preview_status.setObjectName("WorkspaceStateChip")
-        layout.addWidget(self.state_preview_status)
-
-        self.state_run_status = QLabel("Exécution: prête")
-        self.state_run_status.setObjectName("WorkspaceStateChip")
-        layout.addWidget(self.state_run_status)
-
-        self.state_output_status = QLabel("Sortie: automatique")
-        self.state_output_status.setObjectName("WorkspaceStateChip")
-        layout.addWidget(self.state_output_status)
-
-        layout.addStretch(1)
+        strip.setVisible(False)
         return strip
 
     def _refresh_workspace_state(self):
-        self.state_loaded_files.setText(f"Fichiers: {len(self.loaded_files)}")
-        self.state_active_step.setText(f"Étape: {self._active_etape_id or '—'}")
-        if self._preview_loaded:
-            self.state_preview_status.setText(f"Aperçu: {self._last_preview_rows} ligne(s)")
-        else:
-            self.state_preview_status.setText("Aperçu: non généré")
-
-        if self._last_result_success is True:
-            self.state_run_status.setText("Exécution: succès")
-        elif self._last_result_success is False:
-            self.state_run_status.setText("Exécution: erreur")
-        else:
-            self.state_run_status.setText("Exécution: prête")
-
-        if self._output_path:
-            self.state_output_status.setText("Sortie: disponible")
-        elif self._output_dir_hint:
-            self.state_output_status.setText("Sortie: dossier défini")
-        else:
-            self.state_output_status.setText("Sortie: automatique")
+        # Conservé pour compatibilité des appels, sans UI associée.
+        return
 
     def set_output_dir_hint(self, output_dir: str):
         """Mémorise le dossier de sortie choisi pour fallback d'ouverture."""
@@ -378,22 +333,22 @@ class Workspace(QWidget):
             btn.setMinimumHeight(44)
             btn.setStyleSheet("""
                 QPushButton#StepButton {
-                    background-color: #F3EEF8;
-                    color: #1A1A2E;
-                    border: 2px solid #C4B0D8;
+                    background-color: #F8FAFC;
+                    color: #1F2937;
+                    border: 1px solid #E5E7EB;
                     border-radius: 8px;
                     padding: 8px 16px;
                     text-align: left;
                     font-size: 13px;
                 }
                 QPushButton#StepButton:hover {
-                    background-color: #E0D4EF;
-                    border-color: #4B286D;
+                    background-color: #FDF4FF;
+                    border-color: #B882EE;
                 }
                 QPushButton#StepButton:checked {
-                    background-color: #4B286D;
+                    background-color: #B882EE;
                     color: white;
-                    border-color: #4B286D;
+                    border-color: #C86FD0;
                     font-weight: bold;
                 }
             """)
@@ -475,7 +430,7 @@ class Workspace(QWidget):
                 line = QLineEdit()
                 line.setPlaceholderText("Cliquer ou glisser un fichier...")
                 line.setReadOnly(True)
-                line.setStyleSheet("color: #000000;")
+                line.setStyleSheet("color: #1F2937;")
                 btn = QPushButton("Parcourir")
                 btn.setObjectName("SecondaryButton")
                 exts = " ".join(f"*{e}" for e in inp.extensions)
@@ -497,7 +452,7 @@ class Workspace(QWidget):
                 line = QLineEdit()
                 line.setPlaceholderText("Sélectionner un dossier...")
                 line.setReadOnly(True)
-                line.setStyleSheet("color: #000000;")
+                line.setStyleSheet("color: #1F2937;")
                 btn = QPushButton("Parcourir")
                 btn.setObjectName("SecondaryButton")
                 btn.clicked.connect(
@@ -515,7 +470,7 @@ class Workspace(QWidget):
             elif inp.input_type == "text":
                 line = QLineEdit()
                 line.setPlaceholderText(inp.tooltip or "")
-                line.setStyleSheet("color: #000000;")
+                line.setStyleSheet("color: #1F2937;")
                 if inp.default:
                     line.setText(str(inp.default))
                 self.inputs_layout.addWidget(line, row, 1)
@@ -543,7 +498,7 @@ class Workspace(QWidget):
             # Tooltip (sauf pour text où c'est dans le placeholder)
             if inp.tooltip and inp.input_type != "text":
                 tip = QLabel(inp.tooltip)
-                tip.setStyleSheet("color: #6C757D; font-size: 11px; margin-left: 8px;")
+                tip.setStyleSheet("color: #6B7280; font-size: 11px; margin-left: 8px;")
                 self.inputs_layout.addWidget(tip, row, 0, 1, 2)  # Span 2 columns
                 row += 1
 
@@ -595,7 +550,7 @@ class Workspace(QWidget):
             else:
                 w = QLineEdit()
                 w.setText(str(p.get("default", "")))
-                w.setStyleSheet("color: #000000;")
+                w.setStyleSheet("color: #1F2937;")
                 self.params_layout.addWidget(w, i, 1)
                 self.input_widgets[f"param_{p['key']}"] = w
 
@@ -829,7 +784,7 @@ class Workspace(QWidget):
         self.btn_execute.setEnabled(True)
 
         if result.success:
-            self.result_label.setStyleSheet("color: #2E7D32;")
+            self.result_label.setStyleSheet("color: #047857;")
             stats_text = ""
             if result.stats:
                 stats_lines = [f"  • {k}: {v}" for k, v in result.stats.items()]
@@ -857,7 +812,7 @@ class Workspace(QWidget):
             self._last_result_success = True
             self.module_hint_banner.setVisible(False)
         else:
-            self.result_label.setStyleSheet("color: #DC3545;")
+            self.result_label.setStyleSheet("color: #B91C1C;")
             error_text = "\n".join(str(e) for e in result.errors) if result.errors else str(result.message)
             self.result_label.setText(f"ERREUR\n\n{error_text}")
             self._last_result_success = False

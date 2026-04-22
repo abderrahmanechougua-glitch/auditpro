@@ -59,6 +59,7 @@ class MainWindow(QMainWindow):
         self.available_modules = {}
         self.theme_name = "light"
         self.progress_toast: Toast | None = None
+        self.progress_toast_muted = False
 
         # ── Configuration fenêtre ─────────────────────
         self.setWindowTitle(f"{APP_NAME} — {APP_VERSION}")
@@ -434,7 +435,7 @@ class MainWindow(QMainWindow):
             f"<p>Version {APP_VERSION}</p>"
             f"<hr>"
             f"<p style='font-style: italic;'>by Abderrahmane Chougua</p>"
-            f"<p><a href='mailto:abderrahmanechougua@gmail.com' style='color: #6B21A8;'>abderrahmanechougua@gmail.com</a></p>"
+            f"<p><a href='mailto:abderrahmanechougua@gmail.com' style='color: #B882EE;'>abderrahmanechougua@gmail.com</a></p>"
         )
 
     def _contact_author(self):
@@ -461,10 +462,20 @@ class MainWindow(QMainWindow):
 
     def _show_progress_toast(self, title: str, message: str, progress: int):
         self._dismiss_progress_toast()
+        self.progress_toast_muted = False
         self.progress_toast = self.notifications.show_progress(title, message)
+        self.progress_toast.closed.connect(self._on_progress_toast_closed)
         self.progress_toast.set_progress(progress)
 
+    def _on_progress_toast_closed(self):
+        # Si l'utilisateur ferme le toast pendant le traitement,
+        # on évite de le recréer à chaque update de progression.
+        self.progress_toast = None
+        self.progress_toast_muted = True
+
     def _on_worker_progress(self, percent: int, message: str = ""):
+        if self.progress_toast_muted:
+            return
         if self.progress_toast is None:
             self._show_progress_toast("Traitement en cours", message or "Exécution...", percent)
             return
@@ -474,6 +485,7 @@ class MainWindow(QMainWindow):
         self.notifications.reposition()
 
     def _dismiss_progress_toast(self):
+        self.progress_toast_muted = False
         if self.progress_toast is not None:
             self.progress_toast.dismiss()
             self.progress_toast = None

@@ -28,22 +28,22 @@ SUPPORTED_EXTENSIONS = [".xlsx", ".xls", ".xlsm", ".csv"]
 # Désactivé par défaut pour garder une UI légère.
 ENABLE_AI = os.environ.get("AUDITPRO_ENABLE_AI", "0").strip().lower() in {"1", "true", "yes", "on"}
 
-# ── Couleurs thème (violet foncé) ─────────────────────
+# ── Couleurs thème (baseline Figma enterprise) ───────
 COLORS = {
-    "primary":      "#4B286D",
-    "primary_dark":  "#3A1F54",
-    "primary_light": "#6B4D8A",
-    "accent":        "#E8336D",   # Rose accent
-    "success":       "#28A745",
-    "warning":       "#FFC107",
-    "danger":        "#DC3545",
-    "bg_main":       "#F5F5F7",
+    "primary":      "#B882EE",
+    "primary_dark":  "#C86FD0",
+    "primary_light": "#F2A5F2",
+    "accent":        "#FDF4FF",
+    "success":       "#10B981",
+    "warning":       "#F59E0B",
+    "danger":        "#EF4444",
+    "bg_main":       "#FAFBFC",
     "bg_panel":      "#FFFFFF",
-    "bg_sidebar":    "#2D2040",
-    "text_primary":  "#1A1A2E",
-    "text_secondary":"#6C757D",
-    "text_on_dark":  "#EEEAF3",
-    "border":        "#DEE2E6",
+    "bg_sidebar":    "#FFFFFF",
+    "text_primary":  "#1F2937",
+    "text_secondary":"#6B7280",
+    "text_on_dark":  "#1F2937",
+    "border":        "#E5E7EB",
 }
 
 # ── Création auto des dossiers ───────────────────────────

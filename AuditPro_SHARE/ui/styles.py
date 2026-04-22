@@ -7,40 +7,40 @@ from core.config import COLORS
 
 LIGHT_COLORS = dict(COLORS)
 LIGHT_COLORS.update({
-    "module_button_text": "#EE82EE",
-    "banner_bg": "#F8F0FF",
-    "chip_bg": "#F5F1FA",
-    "tab_bg": "#EEE4F7",
-    "tab_bg_alt": "#EFE7F7",
-    "secondary_hover": "#F0E6F6",
-    "drop_hover": "#F8F0FF",
-    "drop_active": "#F3E8FF",
+    "module_button_text": "#4B5563",
+    "banner_bg": "#EEF2FF",
+    "chip_bg": "#F3F4F6",
+    "tab_bg": "#F3F4F6",
+    "tab_bg_alt": "#F8FAFC",
+    "secondary_hover": "#EEF2FF",
+    "drop_hover": "#F8FAFF",
+    "drop_active": "#EEF2FF",
 })
 
 DIM_COLORS = dict(COLORS)
 DIM_COLORS.update({
-    "primary": "#305A78",
-    "primary_dark": "#203C50",
-    "primary_light": "#4D7A97",
-    "accent": "#D97706",
-    "success": "#2E8B57",
-    "warning": "#D97706",
-    "danger": "#C2410C",
-    "bg_main": "#EEF3F7",
-    "bg_panel": "#FCFDFE",
-    "bg_sidebar": "#1F3140",
-    "text_primary": "#14212B",
-    "text_secondary": "#52606D",
-    "text_on_dark": "#E7EEF4",
-    "border": "#CFD8E3",
-    "module_button_text": "#CFE8FF",
-    "banner_bg": "#EAF4FB",
-    "chip_bg": "#EDF3F8",
-    "tab_bg": "#E4EEF6",
-    "tab_bg_alt": "#E8F1F8",
-    "secondary_hover": "#E4EEF6",
-    "drop_hover": "#E8F1F8",
-    "drop_active": "#DCEBF7",
+    "primary": "#B882EE",
+    "primary_dark": "#C86FD0",
+    "primary_light": "#F2A5F2",
+    "accent": "#FDF4FF",
+    "success": "#10B981",
+    "warning": "#F59E0B",
+    "danger": "#EF4444",
+    "bg_main": "#F3F4F6",
+    "bg_panel": "#FFFFFF",
+    "bg_sidebar": "#F9FAFB",
+    "text_primary": "#111827",
+    "text_secondary": "#6B7280",
+    "text_on_dark": "#111827",
+    "border": "#D1D5DB",
+    "module_button_text": "#374151",
+    "banner_bg": "#E0E7FF",
+    "chip_bg": "#E5E7EB",
+    "tab_bg": "#E5E7EB",
+    "tab_bg_alt": "#ECEFF3",
+    "secondary_hover": "#FDF4FF",
+    "drop_hover": "#FDF4FF",
+    "drop_active": "#FAE8FF",
 })
 
 
@@ -65,20 +65,20 @@ QMainWindow {{
 }}
 
 #SideBar QLabel#AppTitle {{
-    color: {c['text_on_dark']};
+    color: {c['text_primary']};
     font-size: 18px;
     font-weight: bold;
     padding: 20px 16px 4px 16px;
 }}
 
 #SideBar QLabel#AppSubtitle {{
-    color: {c['primary_light']};
+    color: {c['text_secondary']};
     font-size: 11px;
     padding: 0px 16px 16px 16px;
 }}
 
 #SideBar QLabel#SectionLabel {{
-    color: {c['primary_light']};
+    color: {c['text_secondary']};
     font-size: 10px;
     font-weight: bold;
     text-transform: uppercase;
@@ -98,13 +98,13 @@ QPushButton#ModuleButton {{
 }}
 
 QPushButton#ModuleButton:hover {{
-    background-color: {c['primary_dark']};
-    color: {c['module_button_text']};
+    background-color: {c['accent']};
+    color: {c['text_primary']};
 }}
 
 QPushButton#ModuleButton:checked {{
     background-color: {c['primary']};
-    color: {c['module_button_text']};
+    color: white;
     font-weight: bold;
 }}
 
@@ -418,12 +418,12 @@ QListWidget#HistoryList {{
 
 QListWidget#HistoryList::item {{
     padding: 6px 16px;
-    color: {c['text_on_dark']};
-    border-bottom: 1px solid {c['primary_dark']};
+    color: {c['text_primary']};
+    border-bottom: 1px solid {c['border']};
 }}
 
 QListWidget#HistoryList::item:hover {{
-    background-color: {c['primary_dark']};
+    background-color: {c['accent']};
 }}
 
 /* ── Barre de progression ────────────────────────────── */
