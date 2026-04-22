@@ -10,6 +10,10 @@ from openpyxl.styles import Font, PatternFill
 
 LOGGER = logging.getLogger(__name__)
 
+WARNING_THRESHOLD = 100.0
+CRITICAL_THRESHOLD = 10000.0
+PERCENTAGE_UNDEFINED = None
+
 
 RUBRIC_PATTERNS = {
     "TOTAL ACTIF": ["total actif"],
@@ -40,6 +44,25 @@ class ReconciliationBundle:
     bg_accounts: pd.DataFrame
     liasse_rubrics: dict[str, float]
     reconciliation_df: pd.DataFrame
+
+
+def _get_severity(ecart: float) -> str:
+    abs_ecart = abs(float(ecart))
+    if abs_ecart > CRITICAL_THRESHOLD:
+        return "CRITIQUE"
+    if abs_ecart > WARNING_THRESHOLD:
+        return "ATTENTION"
+    return "OK"
+
+
+def _compute_percentage(ecart: float, liasse_total: float) -> float | None:
+    if liasse_total:
+        return ecart / liasse_total * 100.0
+    return 0.0 if ecart == 0 else PERCENTAGE_UNDEFINED
+
+
+def _excel_percentage_value(value: float | None):
+    return float(value) if pd.notna(value) else PERCENTAGE_UNDEFINED
 
 
 def _normalize_text(value) -> str:
@@ -124,7 +147,7 @@ def load_balance_generale(path: str | Path) -> pd.DataFrame:
     label_col = _pick_column(df.columns.tolist(), ["libelle", "intitule", "label", "designation"])
     balance_col = _pick_column(df.columns.tolist(), ["solde", "balance", "net", "montant"])
     debit_col = _pick_column(df.columns.tolist(), ["debit"])
-    credit_col = _pick_column(df.columns.tolist(), ["credit"])
+    credit_col = _pick_column(df.columns.tolist(), ["credit", "crédit"])
 
     if not account_col or not label_col:
         raise ValueError("Colonnes 'Compte' et 'Libellé/Intitulé' non détectées dans la BG.")
@@ -221,8 +244,10 @@ def _load_liasse_pdf(path: Path) -> dict[str, float]:
                 tables = page.extract_tables() or []
                 for table in tables:
                     rubrics.update(_extract_rubrics_from_dataframe(pd.DataFrame(table)))
-    except Exception as exc:  # pragma: no cover (environnement dépendant)
-        errors.append(f"pdfplumber: {exc}")
+    except ImportError as exc:  # pragma: no cover
+        errors.append(f"pdfplumber indisponible ({exc}). Installez avec: pip install pdfplumber")
+    except (OSError, ValueError, RuntimeError) as exc:  # pragma: no cover
+        errors.append(f"Échec extraction pdfplumber ({exc}). Tentative du fallback tabula-py.")
 
     if rubrics:
         return rubrics
@@ -233,8 +258,10 @@ def _load_liasse_pdf(path: Path) -> dict[str, float]:
         tables = tabula.read_pdf(str(path), pages="all", multiple_tables=True)
         for table in tables or []:
             rubrics.update(_extract_rubrics_from_dataframe(table))
-    except Exception as exc:  # pragma: no cover (environnement dépendant)
-        errors.append(f"tabula-py: {exc}")
+    except ImportError as exc:  # pragma: no cover
+        errors.append(f"tabula-py indisponible ({exc}). Installez avec: pip install tabula-py")
+    except (OSError, ValueError, RuntimeError) as exc:  # pragma: no cover
+        errors.append(f"Échec extraction tabula-py ({exc}).")
 
     if not rubrics:
         raise ValueError(
@@ -270,15 +297,8 @@ def reconcile(bg_accounts: pd.DataFrame, liasse_rubrics: dict[str, float]) -> pd
         bg_total = float(bg_accounts.loc[mask, "balance"].sum())
         liasse_total = float(liasse_rubrics.get(rubric, 0.0))
         ecart = bg_total - liasse_total
-        pct = (ecart / liasse_total * 100.0) if liasse_total else (0.0 if ecart == 0 else 100.0)
-
-        abs_ecart = abs(ecart)
-        if abs_ecart > 10000:
-            severity = "CRITIQUE"
-        elif abs_ecart > 100:
-            severity = "ATTENTION"
-        else:
-            severity = "OK"
+        pct = _compute_percentage(ecart, liasse_total)
+        severity = _get_severity(ecart)
 
         rows.append(
             {
@@ -292,7 +312,11 @@ def reconcile(bg_accounts: pd.DataFrame, liasse_rubrics: dict[str, float]) -> pd
         )
 
     result = pd.DataFrame(rows)
-    return result.sort_values(by=["Sévérité", "Rubrique"], ascending=[False, True]).reset_index(drop=True)
+    order = pd.CategoricalDtype(["CRITIQUE", "ATTENTION", "OK"], ordered=True)
+    result["Sévérité"] = result["Sévérité"].astype(order)
+    result = result.sort_values(by=["Sévérité", "Rubrique"], ascending=[True, True]).reset_index(drop=True)
+    result["Sévérité"] = result["Sévérité"].astype(str)
+    return result
 
 
 def run_reconciliation(bg_path: str | Path, liasse_path: str | Path) -> ReconciliationBundle:
@@ -335,15 +359,15 @@ def export_reconciliation_report(
                 float(row["Total BG"]),
                 float(row["Total Liasse"]),
                 float(row["Ecart"]),
-                float(row["Ecart %"]),
+                _excel_percentage_value(row["Ecart %"]),
                 row["Sévérité"],
             ]
         )
         current_row = ws.max_row
-        abs_ecart = abs(float(row["Ecart"]))
-        if abs_ecart > 10000:
+        severity = _get_severity(float(row["Ecart"]))
+        if severity == "CRITIQUE":
             fill = fill_crit
-        elif abs_ecart > 100:
+        elif severity == "ATTENTION":
             fill = fill_warn
         else:
             fill = fill_ok
