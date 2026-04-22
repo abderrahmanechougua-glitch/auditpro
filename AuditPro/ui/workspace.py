@@ -120,7 +120,6 @@ class Workspace(QWidget):
 
         self.output_frame.setVisible(False)  # Masqué définitivement
         self.content_layout.addWidget(self.output_frame)
-        self.output_frame.hide()  # Jamais visible
 
         # ── Aperçu ────────────────────────────────────
         self.preview_label = QLabel("Aperçu des données")
@@ -206,11 +205,6 @@ class Workspace(QWidget):
 
         # ── Sélecteur d'étapes (si le module en a) ───
         etapes = getattr(module, "ETAPES", None)
-        # Chercher aussi dans le module Python importé
-        if etapes is None:
-            import modules.circularisation.module as circ_mod
-            if type(module).__name__ == "CircularisationTiers":
-                etapes = circ_mod.ETAPES
         self._build_steps(etapes)
 
         # La box paramètres peut être visible si le module en a
@@ -321,9 +315,9 @@ class Workspace(QWidget):
         if self.current_module:
             self.current_module.etape_active = etape_id
 
-        # Recharger les inputs pour cette étape
-        from modules.circularisation.module import INPUTS_PAR_ETAPE
-        required_inputs = INPUTS_PAR_ETAPE.get(etape_id, [])
+        # Recharger les inputs pour cette étape — générique (pas de couplage dur)
+        inputs_par_etape = getattr(self.current_module, "INPUTS_PAR_ETAPE", {})
+        required_inputs = inputs_par_etape.get(etape_id, [])
 
         self._clear_inputs()
         if required_inputs:

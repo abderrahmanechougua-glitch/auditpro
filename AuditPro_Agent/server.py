@@ -33,14 +33,17 @@ logger = logging.getLogger("auditpro-agent")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 
+# CORS — restrict origins via env var; default to localhost only (not open wildcard)
+_CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000").split(",") if o.strip()]
+
 app = FastAPI(title="AuditPro AI Agent", version="1.0", description="AI-powered audit automation with Ollama")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # ── Import AuditPro modules ──────────────────────────────
@@ -97,13 +100,7 @@ def check_ollama_available() -> bool:
         return False
 
 def call_ollama(messages: list, tools: list | None = None, temperature: float = 0.7) -> dict:
-    """Call Ollama API with retry logic."""
-    if not check_ollama_available():
-        raise HTTPException(
-            status_code=503,
-            detail="Ollama non disponible. Vérifiez qu'il tourne sur localhost:11434 (ollama serve)"
-        )
-
+    """Call Ollama API. Raises HTTPException if Ollama is unavailable."""
     payload = {
         "model": OLLAMA_MODEL,
         "messages": messages,
@@ -194,6 +191,7 @@ def root():
             "upload": "/upload",
             "analyze": "/analyze",
             "health": "/health",
+            "ui": "/ui",
             "docs": "/docs"
         }
     }
@@ -382,7 +380,16 @@ async def upload_file(file: UploadFile = File(...)):
     upload_dir = AUDITPRO_DIR / "uploads"
     upload_dir.mkdir(exist_ok=True)
 
-    file_path = upload_dir / file.filename
+    # Sanitize filename to prevent path traversal attacks
+    safe_name = Path(file.filename).name  # strip any directory components
+    if not safe_name or safe_name.startswith("."):
+        raise HTTPException(status_code=400, detail="Nom de fichier invalide")
+    file_path = (upload_dir / safe_name).resolve()
+    try:
+        file_path.relative_to(upload_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Chemin de fichier non autorisé")
+
     with open(file_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
@@ -390,35 +397,39 @@ async def upload_file(file: UploadFile = File(...)):
     try:
         from core.file_detector import FileDetector
         detector = FileDetector()
-        detection = detector.analyze(file_path)
+        all_modules = registry.get_all()
+        detections = detector.detect(str(file_path), all_modules)
 
         modules_suggérés = []
-        for mod_name, score in detection.get("modules", []):
-            mod = registry.get(mod_name)
-            if mod and score >= mod.detection_threshold:
+        for item in detections:
+            mod = item.get("module")
+            if mod is None:
+                continue
+            score = item.get("score", 0)
+            if score >= getattr(mod, "detection_threshold", 0.5):
                 modules_suggérés.append({
                     "name": mod.name,
                     "score": round(score * 100, 1),
-                    "description": mod.description
+                    "description": mod.description,
+                    "matched_keywords": item.get("matched_keywords", []),
                 })
 
-        # Sort by score descending
-        modules_suggérés.sort(key=lambda x: x["score"], reverse=True)
+        file_info = detector.get_file_info(str(file_path))
 
         return {
             "file_path": str(file_path),
-            "filename": file.filename,
-            "size": file.size,
+            "filename": safe_name,
+            "size_kb": file_info.get("size_kb", 0),
+            "total_rows": file_info.get("total_rows", 0),
+            "sheets": file_info.get("sheets", []),
             "detected_modules": modules_suggérés,
-            "columns": detection.get("columns", []),
             "recommendation": modules_suggérés[0]["name"] if modules_suggérés else "Aucun module détecté"
         }
     except Exception as e:
         logger.error(f"File detection error: {e}")
         return {
             "file_path": str(file_path),
-            "filename": file.filename,
-            "size": file.size,
+            "filename": safe_name,
             "detected_modules": [],
             "error": str(e)
         }
@@ -426,14 +437,25 @@ async def upload_file(file: UploadFile = File(...)):
 
 @app.post("/analyze")
 def analyze_with_ai(file_path: str, question: str = "Que contient ce fichier ?"):
-    """Analyse un fichier avec Ollama et répond à une question."""
+    """Analyse un fichier (déjà uploadé) avec Ollama et répond à une question."""
     if not registry:
         raise HTTPException(status_code=503, detail="AuditPro modules not loaded")
+
+    # Restrict access to the uploads directory only — use relative_to() for reliable containment check
+    upload_dir = (AUDITPRO_DIR / "uploads").resolve()
+    resolved = Path(file_path).resolve()
+    try:
+        resolved.relative_to(upload_dir)
+    except ValueError:
+        raise HTTPException(
+            status_code=403,
+            detail="Accès refusé : seuls les fichiers dans le répertoire uploads sont analysables"
+        )
 
     # Lire le fichier (support Excel/CSV)
     import pandas as pd
 
-    path = Path(file_path)
+    path = resolved
     if not path.exists():
         raise HTTPException(status_code=404, detail="Fichier non trouvé")
 
@@ -471,7 +493,7 @@ Question: {question}"""
 static_dir = Path(__file__).parent / "static"
 static_dir.mkdir(exist_ok=True)
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/ui", response_class=HTMLResponse)
 def serve_ui():
     """Sert l'interface web de l'agent."""
     index_path = static_dir / "index.html"

@@ -115,6 +115,7 @@ class CentralisationTVA(BaseModule):
             # Traitement
             declarations = []
             total = len(pdf_files)
+            warnings = []
             for i, pdf in enumerate(pdf_files):
                 if progress_callback:
                     pct = 10 + int(70 * i / total)
@@ -123,10 +124,13 @@ class CentralisationTVA(BaseModule):
                     d = tva_mod.process_file(pdf)
                     if d: declarations.append(d)
                 except Exception as e:
-                    pass  # Logged dans le script
+                    warnings.append(f"Erreur sur {pdf.name} : {e}")
 
             if not declarations:
-                return ModuleResult(success=False, message="Aucune déclaration extraite.")
+                msg = "Aucune déclaration extraite."
+                if warnings:
+                    msg += "\n" + "\n".join(warnings)
+                return ModuleResult(success=False, message=msg, warnings=warnings)
 
             if progress_callback: progress_callback(85, "Génération du canva Excel...")
 
@@ -149,6 +153,7 @@ class CentralisationTVA(BaseModule):
                 success=True,
                 output_path=str(canva_out),
                 message=f"TVA extraite pour {len(declarations)} mois.",
+                warnings=warnings,
                 stats={
                     "Mois traités": len(declarations),
                     "TVA collectée totale": f"{tot_coll:,.2f}",

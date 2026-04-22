@@ -13,6 +13,7 @@ class ModuleRegistry:
 
     def __init__(self):
         self._modules: dict[str, object] = {}
+        self.load_warnings: list[str] = []
         self._discover()
 
     def _discover(self):
@@ -43,7 +44,9 @@ class ModuleRegistry:
                         break
 
             except Exception as e:
-                print(f"  [!] Erreur chargement module '{item.name}': {e}")
+                warning = f"Module '{item.name}' non chargé : {type(e).__name__}: {e}"
+                self.load_warnings.append(warning)
+                print(f"  [!] {warning}")
 
     def get_all(self) -> dict[str, object]:
         """Retourne tous les modules découverts. {nom: instance}"""

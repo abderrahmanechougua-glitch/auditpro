@@ -220,12 +220,12 @@ QListWidget#HistoryList {{
 
 QListWidget#HistoryList::item {{
     padding: 6px 16px;
-    color: {C['text_on_dark']};
-    border-bottom: 1px solid {C['primary_dark']};
+    color: {C['text_primary']};
+    border-bottom: 1px solid {C['border']};
 }}
 
 QListWidget#HistoryList::item:hover {{
-    background-color: {C['primary_dark']};
+    background-color: #F0E6F6;
 }}
 
 /* ── Barre de progression ────────────────────────────── */

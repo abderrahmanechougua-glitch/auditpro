@@ -184,6 +184,10 @@ class CircularisationTiers(BaseModule):
                           "confirmation", "balance auxiliaire", "solde"]
     detection_threshold = 0.4
 
+    # Module-level step definitions — used by the generic workspace step-selector
+    ETAPES = ETAPES
+    INPUTS_PAR_ETAPE = INPUTS_PAR_ETAPE
+
     # Étape active (modifiée par l'UI)
     etape_active: str = "selection"
 

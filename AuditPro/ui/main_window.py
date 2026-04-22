@@ -91,6 +91,12 @@ class MainWindow(QMainWindow):
                 "Ajoutez vos scripts dans le dossier modules/\n"
                 "avec un fichier module.py dans chaque sous-dossier."
             )
+        elif self.registry.load_warnings:
+            warnings_text = "\n".join(f"• {w}" for w in self.registry.load_warnings)
+            self.assistant.show_message(
+                f"⚠ {len(self.registry.load_warnings)} module(s) non chargé(s) :\n\n"
+                f"{warnings_text}"
+            )
 
     def _build_menu(self):
         menubar = self.menuBar()
