@@ -18,12 +18,11 @@ from core.file_detector import FileDetector
 from core.profiles import ProfileManager
 from core.history import HistoryManager
 from core.worker import Worker
-from core.config import APP_NAME, APP_VERSION
+from core.config import APP_NAME, APP_VERSION, ENABLE_AI
 
 from ui.module_panel import ModulePanel
 from ui.workspace import Workspace
 from ui.assistant_panel import AssistantPanel
-from ui.ai_chat_panel import AIChatPanel
 from ui.notifications import NotificationManager, Toast
 from ui.profile_dialog import ProfileDialog
 from ui.styles import get_stylesheet
@@ -41,9 +40,12 @@ class MainWindow(QMainWindow):
         self.profiles = ProfileManager()
         self.history = HistoryManager()
 
-        # ── Agent IA ──────────────────────────────────
-        from agent.llama_agent import LlamaAgent
-        self._agent = LlamaAgent(self.registry)
+        # ── Agent IA (optionnel) ──────────────────────
+        self._agent = None
+        self.ai_enabled = ENABLE_AI
+        if self.ai_enabled:
+            from agent.llama_agent import LlamaAgent
+            self._agent = LlamaAgent(self.registry)
 
         self.current_module = None
         self.current_profile = ""
@@ -99,7 +101,7 @@ class MainWindow(QMainWindow):
         self.workspace = Workspace()
         self.content_splitter.addWidget(self.workspace)
 
-        # ── Panneau droit (assistant + agent IA) ─────
+        # ── Panneau droit (assistant) ────────────────
         self.right_rail = self._build_right_rail()
         self.content_splitter.addWidget(self.right_rail)
 
@@ -126,9 +128,12 @@ class MainWindow(QMainWindow):
         self.right_tabs.setMinimumWidth(280)
 
         self.assistant = AssistantPanel(self.history)
-        self.ai_chat = AIChatPanel(self._agent)
         self.right_tabs.addTab(self.assistant, "Assistant")
-        self.right_tabs.addTab(self.ai_chat, "Agent IA")
+
+        if self.ai_enabled and self._agent is not None:
+            from ui.ai_chat_panel import AIChatPanel
+            self.ai_chat = AIChatPanel(self._agent)
+            self.right_tabs.addTab(self.ai_chat, "Agent IA")
         rail_layout.addWidget(self.right_tabs)
 
         return rail

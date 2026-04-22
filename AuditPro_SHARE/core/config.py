@@ -24,6 +24,10 @@ MAX_HISTORY = 20
 PREVIEW_ROWS = 10
 SUPPORTED_EXTENSIONS = [".xlsx", ".xls", ".xlsm", ".csv"]
 
+# ── Fonctions optionnelles ───────────────────────────────
+# Désactivé par défaut pour garder une UI légère.
+ENABLE_AI = os.environ.get("AUDITPRO_ENABLE_AI", "0").strip().lower() in {"1", "true", "yes", "on"}
+
 # ── Couleurs thème (violet foncé) ─────────────────────
 COLORS = {
     "primary":      "#4B286D",
