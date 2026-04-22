@@ -234,6 +234,9 @@ class Toast(QWidget):
         if self._closing:
             return
         self._closing = True
+        # Stop any in-progress repositioning animation so it cannot interfere
+        # with the slide-out animation that follows.
+        self.animation_in.stop()
         current = self.geometry()
         end_rect = QRect(current.x() + 30, current.y(), current.width(), current.height())
         self.animation_out.stop()
@@ -325,6 +328,10 @@ class NotificationManager(QWidget):
         available_width = max(320, parent.width() - self.margin_right)
 
         for notification in list(self.notifications):
+            # Skip toasts that are already animating out — repositioning them
+            # would start animation_in and conflict with the dismiss animation.
+            if notification._closing:
+                continue
             notification.adjustSize()
             width = min(notification.width(), available_width)
             height = notification.height()

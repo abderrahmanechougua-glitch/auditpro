@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QFrame, QStatusBar, QMessageBox,
     QFileDialog, QTabWidget
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QAction, QIcon
 
 from core.module_registry import ModuleRegistry
@@ -466,6 +466,12 @@ class MainWindow(QMainWindow):
             self.progress_toast.update_message(message)
         self.progress_toast.set_progress(percent)
         self.notifications.reposition()
+
+        # Safety net: if the module signals 100 % complete, schedule the toast
+        # to dismiss after a short delay so it disappears even when
+        # _on_execution_finished is delayed or the normal dismiss path fails.
+        if percent >= 100:
+            QTimer.singleShot(600, self._dismiss_progress_toast)
 
     def _dismiss_progress_toast(self):
         if self.progress_toast is not None:
