@@ -26,6 +26,7 @@ a = Analysis(
         (str(ROOT / 'modules' / 'srm_generator'),        'modules/srm_generator'),
         (str(ROOT / 'modules' / 'extraction_factures'),  'modules/extraction_factures'),
         (str(ROOT / 'modules' / 'extraction_ir'),        'modules/extraction_ir'),
+        (str(ROOT / 'modules' / 'reconciliation_bg_liasse'), 'modules/reconciliation_bg_liasse'),
         # Core
         (str(ROOT / 'core'),   'core'),
         (str(ROOT / 'ui'),     'ui'),
@@ -39,6 +40,7 @@ a = Analysis(
         'openpyxl.utils', 'openpyxl.chart',
         # PDF / OCR
         'pdfplumber', 'pdfminer', 'pdfminer.high_level',
+        'tabula',
         'pdf2image', 'pytesseract',
         'pypdf', 'pypdf._reader',
         # Word
@@ -60,6 +62,9 @@ a = Analysis(
         'modules.srm_generator', 'modules.srm_generator.module',
         'modules.extraction_factures', 'modules.extraction_factures.module',
         'modules.extraction_ir', 'modules.extraction_ir.module',
+        'modules.reconciliation_bg_liasse',
+        'modules.reconciliation_bg_liasse.module',
+        'modules.reconciliation_bg_liasse.reconciliation',
         'core', 'core.config', 'core.module_registry',
         'core.file_detector', 'core.profiles', 'core.history', 'core.worker',
         'ui', 'ui.main_window', 'ui.workspace', 'ui.module_panel',
