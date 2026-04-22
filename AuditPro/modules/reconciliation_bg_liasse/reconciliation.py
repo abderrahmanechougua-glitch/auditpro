@@ -51,6 +51,13 @@ GREEN_FILL = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="so
 YELLOW_FILL = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
 RED_FILL = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
 
+DEFAULT_HEADER_SCAN_ROWS = 30
+MIN_MEDIUM_THRESHOLD = 10.0
+MEDIUM_THRESHOLD_PCT = 0.01
+MIN_LARGE_THRESHOLD = 100.0
+LARGE_THRESHOLD_PCT = 0.05
+PDF_LINE_PATTERN = re.compile(r"^(.+?)\s+(-?\d[\d\s\.,]*)$")
+
 
 def _normalize_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "").strip().lower())
@@ -63,8 +70,13 @@ def _normalize_amount(value: Any) -> float:
         return float(value)
     raw = str(value).strip().replace(" ", "")
     raw = raw.replace("\u202f", "").replace("\xa0", "")
-    if raw.count(",") == 1 and raw.count(".") > 1:
-        raw = raw.replace(".", "").replace(",", ".")
+    if "," in raw and "." in raw:
+        if raw.rfind(",") > raw.rfind("."):
+            comma_idx = raw.rfind(",")
+            raw = raw[:comma_idx].replace(".", "").replace(",", "") + "." + raw[comma_idx + 1 :]
+        else:
+            dot_idx = raw.rfind(".")
+            raw = raw[:dot_idx].replace(",", "") + "." + raw[dot_idx + 1 :].replace(",", "")
     elif raw.count(",") == 1 and raw.count(".") == 0:
         raw = raw.replace(",", ".")
     elif raw.count(",") > 1 and raw.count(".") == 0:
@@ -75,7 +87,9 @@ def _normalize_amount(value: Any) -> float:
         return 0.0
 
 
-def detect_header_row(raw_df: pd.DataFrame, expected_keywords: list[str], max_scan: int = 30) -> int:
+def detect_header_row(
+    raw_df: pd.DataFrame, expected_keywords: list[str], max_scan: int = DEFAULT_HEADER_SCAN_ROWS
+) -> int:
     if raw_df.empty:
         return 0
 
@@ -195,7 +209,7 @@ def _extract_liasse_pdf(path: str) -> pd.DataFrame:
                 text = page.extract_text() or ""
                 for line in text.splitlines():
                     line_clean = re.sub(r"\s+", " ", line).strip()
-                    m = re.search(r"(.+?)\s+(-?[\d\s\.,]+)$", line_clean)
+                    m = PDF_LINE_PATTERN.search(line_clean)
                     if not m:
                         continue
                     rubrique = m.group(1).strip()
@@ -245,8 +259,8 @@ def _build_report_dataframe(bg_df: pd.DataFrame, liasse_df: pd.DataFrame) -> pd.
     def _status(row: pd.Series) -> str:
         ecart = abs(float(row["Ecart"]))
         base = abs(float(row["Montant_Liasse"]))
-        medium_threshold = max(10.0, base * 0.01)
-        large_threshold = max(100.0, base * 0.05)
+        medium_threshold = max(MIN_MEDIUM_THRESHOLD, base * MEDIUM_THRESHOLD_PCT)
+        large_threshold = max(MIN_LARGE_THRESHOLD, base * LARGE_THRESHOLD_PCT)
         if ecart <= medium_threshold:
             return "OK"
         if ecart <= large_threshold:

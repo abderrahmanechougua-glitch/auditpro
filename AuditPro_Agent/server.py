@@ -15,6 +15,7 @@ import requests
 import json
 import shutil
 import tempfile
+from datetime import datetime, timedelta
 from uuid import uuid4
 from typing import Optional, List, Dict, Any
 
@@ -444,6 +445,21 @@ def _persist_upload(target_dir: Path, upload: UploadFile) -> Path:
     return file_path
 
 
+def _cleanup_old_reconciliation_uploads(base_dir: Path, max_age_hours: int = 24) -> None:
+    if not base_dir.exists():
+        return
+    cutoff = datetime.now() - timedelta(hours=max_age_hours)
+    for child in base_dir.iterdir():
+        if not child.is_dir():
+            continue
+        try:
+            modified_at = datetime.fromtimestamp(child.stat().st_mtime)
+            if modified_at < cutoff:
+                shutil.rmtree(child, ignore_errors=True)
+        except Exception as exc:
+            logger.warning(f"Cleanup skipped for {child}: {exc}")
+
+
 @app.post("/api/reconciliation/bg-liasse")
 async def reconcile_bg_liasse(
     bg_file: UploadFile = File(...),
@@ -457,7 +473,10 @@ async def reconcile_bg_liasse(
     if not module:
         raise HTTPException(status_code=404, detail="Module Réconciliation BG-Liasse non chargé")
 
-    run_dir = AUDITPRO_DIR / "uploads" / "reconciliation_bg_liasse" / uuid4().hex
+    reconciliation_upload_dir = AUDITPRO_DIR / "uploads" / "reconciliation_bg_liasse"
+    _cleanup_old_reconciliation_uploads(reconciliation_upload_dir)
+
+    run_dir = reconciliation_upload_dir / uuid4().hex
     bg_path = _persist_upload(run_dir, bg_file)
     liasse_path = _persist_upload(run_dir, liasse_file)
 

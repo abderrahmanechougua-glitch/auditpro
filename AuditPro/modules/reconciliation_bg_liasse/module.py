@@ -25,11 +25,19 @@ class ReconciliationBGLiasse(BaseModule):
     ]
     detection_threshold = 0.25
 
+    @staticmethod
+    def _as_list(value):
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        return [value]
+
     def get_required_inputs(self):
         return [
             ModuleInput(
                 key="fichier_bg",
-                label="Balance Générale",
+                label="Balance Générale (1 ou plusieurs fichiers)",
                 input_type="file",
                 extensions=[".xlsx", ".xls"],
                 required=True,
@@ -37,7 +45,7 @@ class ReconciliationBGLiasse(BaseModule):
             ),
             ModuleInput(
                 key="fichier_liasse",
-                label="Liasse Fiscale",
+                label="Liasse Fiscale (1 ou plusieurs fichiers)",
                 input_type="file",
                 extensions=[".xlsx", ".xls", ".pdf"],
                 required=True,
@@ -56,21 +64,14 @@ class ReconciliationBGLiasse(BaseModule):
         if not liasse_files:
             errors.append("Fichier Liasse requis.")
 
-        def _as_list(value):
-            if value is None:
-                return []
-            if isinstance(value, list):
-                return value
-            return [value]
-
-        for path in _as_list(bg_files):
+        for path in self._as_list(bg_files):
             p = Path(path)
             if not p.exists():
                 errors.append(f"Fichier BG introuvable : {path}")
             elif p.suffix.lower() not in {".xlsx", ".xls"}:
                 errors.append(f"Format BG non supporté : {path}")
 
-        for path in _as_list(liasse_files):
+        for path in self._as_list(liasse_files):
             p = Path(path)
             if not p.exists():
                 errors.append(f"Fichier Liasse introuvable : {path}")
@@ -84,15 +85,8 @@ class ReconciliationBGLiasse(BaseModule):
 
     def execute(self, inputs, output_dir, progress_callback=None):
         try:
-            def _as_list(value):
-                if value is None:
-                    return []
-                if isinstance(value, list):
-                    return value
-                return [value]
-
-            bg_files = _as_list(inputs.get("fichier_bg"))
-            liasse_files = _as_list(inputs.get("fichier_liasse"))
+            bg_files = self._as_list(inputs.get("fichier_bg"))
+            liasse_files = self._as_list(inputs.get("fichier_liasse"))
 
             if not bg_files or not liasse_files:
                 return ModuleResult(success=False, message="Fichiers BG et Liasse requis.")
