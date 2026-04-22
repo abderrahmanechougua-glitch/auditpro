@@ -106,6 +106,7 @@ QPushButton#ModuleButton:checked {{
     background-color: {c['primary']};
     color: white;
     font-weight: bold;
+    border-left: 3px solid {c['primary_dark']};
 }}
 
 /* ── Zone centrale (Workspace) ───────────────────────── */
@@ -142,6 +143,32 @@ QLabel#DropFeedback {{
     padding: 8px 12px;
     color: {c['primary_dark']};
     font-size: 12px;
+    font-weight: bold;
+}}
+
+QPushButton#StepButton {{
+    background-color: #F8FAFC;
+    color: {c['text_primary']};
+    border: 1px solid {c['border']};
+    border-radius: 8px;
+    padding: 8px 16px;
+    text-align: left;
+    font-size: 13px;
+}}
+
+QPushButton#StepButton:hover {{
+    background-color: {c['accent']};
+    border-color: {c['primary']};
+}}
+
+QPushButton#StepButton:pressed {{
+    background-color: {c['drop_active']};
+}}
+
+QPushButton#StepButton:checked {{
+    background-color: {c['primary']};
+    color: white;
+    border-color: {c['primary_dark']};
     font-weight: bold;
 }}
 
@@ -255,6 +282,16 @@ QPushButton#PrimaryButton:hover {{
     background-color: {c['primary_dark']};
 }}
 
+QPushButton#PrimaryButton:pressed {{
+    background-color: {c['primary_dark']};
+    padding-top: 11px;
+    padding-bottom: 9px;
+}}
+
+QPushButton#PrimaryButton:focus {{
+    border: 2px solid {c['primary_light']};
+}}
+
 QPushButton#PrimaryButton:disabled {{
     background-color: {c['border']};
     color: {c['text_secondary']};
@@ -272,6 +309,14 @@ QPushButton#SecondaryButton {{
 
 QPushButton#SecondaryButton:hover {{
     background-color: {c['secondary_hover']};
+}}
+
+QPushButton#SecondaryButton:pressed {{
+    background-color: {c['drop_active']};
+}}
+
+QPushButton#SecondaryButton:focus {{
+    border-color: {c['primary_dark']};
 }}
 
 QPushButton#DangerButton {{
@@ -422,6 +467,10 @@ QTableWidget {{
     selection-color: {c['text_primary']};
 }}
 
+QTableWidget::item:hover {{
+    background-color: {c['drop_hover']};
+}}
+
 QTableWidget::item {{
     padding: 4px 8px;
 }}
@@ -454,6 +503,18 @@ QFrame#ResultPanel[state="warning"] {{
 QFrame#ResultPanel[state="error"] {{
     background-color: #FEF2F2;
     border: 1px solid #FECACA;
+}}
+
+QFrame#ResultPanel[state="success"] QLabel#ResultTitle {{
+    color: #047857;
+}}
+
+QFrame#ResultPanel[state="warning"] QLabel#ResultTitle {{
+    color: #B45309;
+}}
+
+QFrame#ResultPanel[state="error"] QLabel#ResultTitle {{
+    color: #B91C1C;
 }}
 
 QLabel#ResultTitle {{
@@ -518,6 +579,12 @@ QLineEdit, QComboBox, QSpinBox, QDateEdit {{
 
 QLineEdit:focus, QComboBox:focus {{
     border-color: {c['primary']};
+    background-color: #FFFFFF;
+}}
+
+QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDateEdit:disabled {{
+    background-color: #F9FAFB;
+    color: {c['text_secondary']};
 }}
 
 /* ── Scrollbar ───────────────────────────────────────── */

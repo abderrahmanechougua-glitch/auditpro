@@ -365,27 +365,6 @@ class Workspace(QWidget):
             btn.setCheckable(True)
             btn.setObjectName("StepButton")
             btn.setMinimumHeight(44)
-            btn.setStyleSheet("""
-                QPushButton#StepButton {
-                    background-color: #F8FAFC;
-                    color: #1F2937;
-                    border: 1px solid #E5E7EB;
-                    border-radius: 8px;
-                    padding: 8px 16px;
-                    text-align: left;
-                    font-size: 13px;
-                }
-                QPushButton#StepButton:hover {
-                    background-color: #FDF4FF;
-                    border-color: #B882EE;
-                }
-                QPushButton#StepButton:checked {
-                    background-color: #B882EE;
-                    color: white;
-                    border-color: #C86FD0;
-                    font-weight: bold;
-                }
-            """)
             etape_id = etape["id"]
             etape_desc = etape["description"]
             btn.clicked.connect(
