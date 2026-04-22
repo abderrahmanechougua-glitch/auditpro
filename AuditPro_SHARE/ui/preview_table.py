@@ -13,9 +13,14 @@ class PreviewTable(QTableWidget):
         super().__init__(parent)
         self.setAlternatingRowColors(True)
         self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.setShowGrid(False)
+        self.setSortingEnabled(False)
         self.verticalHeader().setDefaultSectionSize(28)
+        self.verticalHeader().setVisible(False)
         self.horizontalHeader().setStretchLastSection(True)
+        self.horizontalHeader().setHighlightSections(False)
 
     def load_dataframe(self, df: pd.DataFrame, max_rows: int = 10):
         """Charge un DataFrame et l'affiche."""
@@ -47,9 +52,10 @@ class PreviewTable(QTableWidget):
                 self.setItem(i, j, item)
 
         # Auto-resize colonnes
-        self.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.ResizeToContents
-        )
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        if self.columnCount() > 0:
+            # Garde la dernière colonne flexible pour une meilleure lisibilité.
+            self.horizontalHeader().setSectionResizeMode(self.columnCount() - 1, QHeaderView.ResizeMode.Stretch)
 
     def clear_table(self):
         self.setRowCount(0)

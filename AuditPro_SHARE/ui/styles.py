@@ -162,8 +162,31 @@ QLabel#WorkspaceStateChip {{
 
 QLabel#SectionTitle {{
     font-weight: bold;
-    font-size: 14px;
+    font-size: 15px;
     color: {c['text_primary']};
+}}
+
+QLabel#InputLabel {{
+    font-weight: 600;
+    font-size: 12px;
+    color: {c['text_primary']};
+    padding-top: 2px;
+}}
+
+QLabel#InputTip {{
+    color: {c['text_secondary']};
+    font-size: 11px;
+    margin-left: 8px;
+    padding-bottom: 4px;
+}}
+
+QLabel#PreviewMeta {{
+    background-color: {c['chip_bg']};
+    border: 1px solid {c['border']};
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: {c['text_secondary']};
 }}
 
 QTabWidget#AnalysisTabs::pane {{
@@ -391,9 +414,12 @@ QSplitter#MainContentSplitter::handle:horizontal {{
 QTableWidget {{
     background-color: {c['bg_panel']};
     border: 1px solid {c['border']};
-    border-radius: 6px;
+    border-radius: 8px;
     gridline-color: {c['border']};
-    font-size: 11px;
+    font-size: 12px;
+    alternate-background-color: {c['chip_bg']};
+    selection-background-color: {c['accent']};
+    selection-color: {c['text_primary']};
 }}
 
 QTableWidget::item {{
@@ -404,9 +430,49 @@ QTableWidget QHeaderView::section {{
     background-color: {c['primary']};
     color: white;
     font-weight: bold;
-    font-size: 11px;
-    padding: 6px 8px;
+    font-size: 12px;
+    padding: 8px 10px;
     border: none;
+}}
+
+QFrame#ResultPanel {{
+    background-color: {c['bg_panel']};
+    border: 1px solid {c['border']};
+    border-radius: 10px;
+}}
+
+QFrame#ResultPanel[state="success"] {{
+    background-color: #ECFDF5;
+    border: 1px solid #A7F3D0;
+}}
+
+QFrame#ResultPanel[state="warning"] {{
+    background-color: #FFFBEB;
+    border: 1px solid #FDE68A;
+}}
+
+QFrame#ResultPanel[state="error"] {{
+    background-color: #FEF2F2;
+    border: 1px solid #FECACA;
+}}
+
+QLabel#ResultTitle {{
+    font-size: 14px;
+    font-weight: 700;
+    color: {c['text_primary']};
+}}
+
+QLabel#ResultBody {{
+    font-size: 12px;
+    color: {c['text_primary']};
+    line-height: 1.4;
+}}
+
+QLabel#ResultMeta {{
+    font-size: 11px;
+    color: {c['text_secondary']};
+    border-top: 1px solid {c['border']};
+    padding-top: 6px;
 }}
 
 /* ── Historique ──────────────────────────────────────── */

@@ -105,6 +105,11 @@ class Workspace(QWidget):
         self.content_layout.addWidget(self.step_desc)
 
         # ── Zone d'inputs dynamiques ──────────────────
+        self.inputs_title = QLabel("Configuration")
+        self.inputs_title.setObjectName("SectionTitle")
+        self.inputs_title.setVisible(False)
+        self.content_layout.addWidget(self.inputs_title)
+
         self.inputs_frame = QFrame()
         self.inputs_frame.setObjectName("Card")
         self.inputs_layout = QGridLayout(self.inputs_frame)
@@ -147,15 +152,28 @@ class Workspace(QWidget):
         self.content_layout.addWidget(self.output_frame)
 
         # ── Aperçu ────────────────────────────────────
+        self.preview_frame = QFrame()
+        self.preview_frame.setObjectName("Card")
+        preview_layout = QVBoxLayout(self.preview_frame)
+        preview_layout.setContentsMargins(16, 14, 16, 14)
+        preview_layout.setSpacing(10)
+
+        preview_header = QHBoxLayout()
         self.preview_label = QLabel("Aperçu des données")
         self.preview_label.setObjectName("SectionTitle")
-        self.preview_label.setVisible(False)
-        self.content_layout.addWidget(self.preview_label)
+        preview_header.addWidget(self.preview_label)
+        preview_header.addStretch(1)
+        self.preview_meta = QLabel("0 ligne")
+        self.preview_meta.setObjectName("PreviewMeta")
+        preview_header.addWidget(self.preview_meta)
+        preview_layout.addLayout(preview_header)
 
         self.preview_table = PreviewTable()
-        self.preview_table.setVisible(False)
-        self.preview_table.setMaximumHeight(260)
-        self.content_layout.addWidget(self.preview_table)
+        self.preview_table.setMaximumHeight(300)
+        preview_layout.addWidget(self.preview_table)
+
+        self.preview_frame.setVisible(False)
+        self.content_layout.addWidget(self.preview_frame)
 
         # ── Boutons d'action ──────────────────────────
         btn_layout = QHBoxLayout()
@@ -195,11 +213,25 @@ class Workspace(QWidget):
 
         # ── Résultat ──────────────────────────────────
         self.result_frame = QFrame()
-        self.result_frame.setObjectName("Card")
+        self.result_frame.setObjectName("ResultPanel")
         self.result_layout = QVBoxLayout(self.result_frame)
+        self.result_layout.setContentsMargins(16, 14, 16, 14)
+        self.result_layout.setSpacing(8)
+
+        self.result_title = QLabel("")
+        self.result_title.setObjectName("ResultTitle")
+        self.result_layout.addWidget(self.result_title)
+
         self.result_label = QLabel("")
+        self.result_label.setObjectName("ResultBody")
         self.result_label.setWordWrap(True)
         self.result_layout.addWidget(self.result_label)
+
+        self.result_meta = QLabel("")
+        self.result_meta.setObjectName("ResultMeta")
+        self.result_meta.setVisible(False)
+        self.result_layout.addWidget(self.result_meta)
+
         self.result_frame.setVisible(False)
         self.content_layout.addWidget(self.result_frame)
 
@@ -250,8 +282,8 @@ class Workspace(QWidget):
         self._step_buttons.clear()
         self._active_etape_id = ""
         self.preview_table.clear_table()
-        self.preview_table.setVisible(False)
-        self.preview_label.setVisible(False)
+        self.preview_meta.setText("0 ligne")
+        self.preview_frame.setVisible(False)
         self.result_frame.setVisible(False)
         self.btn_open_output.setVisible(False)
         self.progress_bar.setVisible(False)
@@ -280,8 +312,10 @@ class Workspace(QWidget):
             required_inputs = module.get_required_inputs()
             if required_inputs:
                 self._build_inputs(required_inputs)
+                self.inputs_title.setVisible(True)
                 self.inputs_frame.setVisible(True)
             else:
+                self.inputs_title.setVisible(False)
                 self.inputs_frame.setVisible(False)
 
         # Afficher les paramètres du module si disponibles
@@ -389,15 +423,16 @@ class Workspace(QWidget):
         self._clear_inputs()
         if required_inputs:
             self._build_inputs(required_inputs)
+            self.inputs_title.setVisible(True)
             self.inputs_frame.setVisible(True)
         else:
+            self.inputs_title.setVisible(False)
             self.inputs_frame.setVisible(False)
 
         # Masquer résultats précédents
         self.result_frame.setVisible(False)
         self.btn_open_output.setVisible(False)
-        self.preview_table.setVisible(False)
-        self.preview_label.setVisible(False)
+        self.preview_frame.setVisible(False)
         self._preview_loaded = False
         self._last_preview_rows = 0
         self._last_result_success = None
@@ -420,7 +455,7 @@ class Workspace(QWidget):
         for inp in inputs:
             # Label
             label = QLabel(f"{inp.label} {'*' if inp.required else ''}")
-            label.setStyleSheet("font-weight: bold;")
+            label.setObjectName("InputLabel")
             self.inputs_layout.addWidget(label, row, 0)
             row += 1
 
@@ -498,7 +533,7 @@ class Workspace(QWidget):
             # Tooltip (sauf pour text où c'est dans le placeholder)
             if inp.tooltip and inp.input_type != "text":
                 tip = QLabel(inp.tooltip)
-                tip.setStyleSheet("color: #6B7280; font-size: 11px; margin-left: 8px;")
+                tip.setObjectName("InputTip")
                 self.inputs_layout.addWidget(tip, row, 0, 1, 2)  # Span 2 columns
                 row += 1
 
@@ -511,7 +546,7 @@ class Workspace(QWidget):
                 item.widget().deleteLater()
 
         title = QLabel("Paramètres")
-        title.setStyleSheet("font-weight: bold; font-size: 14px;")
+        title.setObjectName("SectionTitle")
         self.params_layout.addWidget(title, 0, 0, 1, 2)
 
         for i, p in enumerate(params, 1):
@@ -737,8 +772,8 @@ class Workspace(QWidget):
             df = self.current_module.preview(inputs)
             if df is not None and not df.empty:
                 self.preview_table.load_dataframe(df)
-                self.preview_table.setVisible(True)
-                self.preview_label.setVisible(True)
+                self.preview_meta.setText(f"{len(df):,} ligne(s) chargée(s)".replace(",", " "))
+                self.preview_frame.setVisible(True)
                 self._preview_loaded = True
                 self._last_preview_rows = min(len(df), 10)
                 self.module_hint_banner.setText("Aperçu chargé. Vérifiez les données avant exécution.")
@@ -747,6 +782,8 @@ class Workspace(QWidget):
             else:
                 self._preview_loaded = False
                 self._last_preview_rows = 0
+                self.preview_meta.setText("0 ligne")
+                self.preview_frame.setVisible(False)
                 self._refresh_workspace_state()
                 QMessageBox.information(self, "Aperçu",
                                         "Pas d'aperçu disponible pour ce module.")
@@ -782,17 +819,17 @@ class Workspace(QWidget):
         self.progress_bar.setVisible(False)
         self.progress_message.setVisible(False)
         self.btn_execute.setEnabled(True)
+        self.result_meta.setVisible(False)
+        self.result_frame.setProperty("state", "neutral")
 
         if result.success:
-            self.result_label.setStyleSheet("color: #047857;")
+            self.result_title.setText("Traitement terminé")
+            self.result_frame.setProperty("state", "success")
             stats_text = ""
             if result.stats:
                 stats_lines = [f"  • {k}: {v}" for k, v in result.stats.items()]
                 stats_text = "\n" + "\n".join(stats_lines)
-            self.result_label.setText(
-                f"OK  Traitement réussi\n\n"
-                f"{result.message}{stats_text}"
-            )
+            self.result_label.setText(f"{result.message}{stats_text}")
             self._output_path = result.output_path
 
             # Fallback : certains modules réussissent sans renseigner output_path.
@@ -803,27 +840,37 @@ class Workspace(QWidget):
             if self._output_path:
                 p = Path(self._output_path)
                 if p.is_dir():
-                    self.btn_open_output.setText("Ouvrir le fichier")
+                    self.btn_open_output.setText("Ouvrir le dossier")
                 else:
                     self.btn_open_output.setText("Ouvrir le fichier")
                 self.btn_open_output.setVisible(True)
+                self.result_meta.setText(str(self._output_path))
+                self.result_meta.setVisible(True)
             else:
                 self.btn_open_output.setVisible(False)
             self._last_result_success = True
             self.module_hint_banner.setVisible(False)
         else:
-            self.result_label.setStyleSheet("color: #B91C1C;")
+            self.result_title.setText("Erreur d'exécution")
+            self.result_frame.setProperty("state", "error")
             error_text = "\n".join(str(e) for e in result.errors) if result.errors else str(result.message)
-            self.result_label.setText(f"ERREUR\n\n{error_text}")
+            self.result_label.setText(error_text)
             self._last_result_success = False
 
         if result.warnings:
             warns = "\n".join(f"Attention : {str(w)}" for w in result.warnings)
             current = self.result_label.text()
             self.result_label.setText(f"{current}\n\n{warns}")
+            if result.success:
+                self.result_title.setText("Traitement terminé avec avertissements")
+                self.result_frame.setProperty("state", "warning")
             self._last_warning_count = len(result.warnings)
         else:
             self._last_warning_count = 0
+
+        # Re-polish pour prendre en compte l'état visuel dynamique.
+        self.result_frame.style().unpolish(self.result_frame)
+        self.result_frame.style().polish(self.result_frame)
 
         self.result_frame.setVisible(True)
         self._refresh_workspace_state()
