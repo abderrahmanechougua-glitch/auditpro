@@ -30,7 +30,15 @@ from .validator import build_validation_report, validate_document, validate_gl_b
 logger = logging.getLogger(__name__)
 
 
-def _detect_gl_source_format(file_path: Path, max_rows: int = 40) -> str:
+def _read_excel_head(file_path: Path, nrows: int) -> Optional[pd.DataFrame]:
+    """Lecture défensive des premières lignes d'un fichier Excel."""
+    try:
+        return pd.read_excel(file_path, header=None, nrows=nrows, dtype=str)
+    except Exception:
+        return None
+
+
+def _detect_gl_source_format(file_path: Path, max_rows: int = 40, df_top: Optional[pd.DataFrame] = None) -> str:
     """
     Détecte le format source GL principal.
 
@@ -38,13 +46,12 @@ def _detect_gl_source_format(file_path: Path, max_rows: int = 40) -> str:
     - "d365" pour Dynamics (Nominal/Sector/Charge Type, Voucher, etc.)
     - "sage" pour exports Sage 100 (Grand-livre des comptes, C.j, N° pièce)
     """
-    try:
-        df_top = pd.read_excel(file_path, header=None, nrows=max_rows, dtype=str)
-    except Exception:
+    df_head = df_top if df_top is not None else _read_excel_head(file_path, max_rows)
+    if df_head is None:
         return "d365"
 
     joined = " ".join(
-        str(v).lower() for v in df_top.fillna("").values.flatten() if str(v).strip()
+        str(v).lower() for v in df_head.fillna("").values.flatten() if str(v).strip()
     )
 
     d365_signals = [
@@ -72,22 +79,26 @@ def _detect_gl_source_format(file_path: Path, max_rows: int = 40) -> str:
     return "d365"
 
 
-def _detect_gl_header_row(file_path: Path, max_rows: int = 20) -> int:
+def _detect_gl_header_row(file_path: Path, max_rows: int = 20, df_top: Optional[pd.DataFrame] = None) -> int:
     """Détecte la ligne d'en-tête d'un GL D365 (cherche 'Date' en col 0 suivi de 'Voucher')."""
-    import re as _re
-    try:
-        df_top = pd.read_excel(file_path, header=None, nrows=max_rows, dtype=str)
-        for i, row in df_top.iterrows():
-            val0 = str(row.iloc[0]).strip().lower()
-            val2 = str(row.iloc[2]).strip().lower() if len(row) > 2 else ""
-            if val0 == "date" and ("voucher" in val2 or "document" in val2):
-                return int(i)
-        # Fallback: cherche juste 'date' en col 0
-        for i, row in df_top.iterrows():
-            if str(row.iloc[0]).strip().lower() == "date":
-                return int(i)
-    except Exception:
-        pass
+    df_head = df_top if df_top is not None else _read_excel_head(file_path, max_rows)
+    if df_head is None or df_head.empty:
+        return 9
+
+    col0 = df_head.iloc[:, 0].fillna("").astype(str).str.strip().str.lower()
+    if df_head.shape[1] > 2:
+        col2 = df_head.iloc[:, 2].fillna("").astype(str).str.strip().str.lower()
+    else:
+        col2 = pd.Series("", index=df_head.index)
+
+    strict_mask = (col0 == "date") & (col2.str.contains("voucher|document", regex=True, na=False))
+    if strict_mask.any():
+        return int(strict_mask.idxmax())
+
+    loose_mask = col0 == "date"
+    if loose_mask.any():
+        return int(loose_mask.idxmax())
+
     return 9  # D365 default
 
 
@@ -102,10 +113,16 @@ def _load_gl_d365(file_path: Path) -> pd.DataFrame:
     """
     import re as _re
 
-    header_row = _detect_gl_header_row(file_path)
+    df_head = _read_excel_head(file_path, 40)
+    header_row = _detect_gl_header_row(file_path, df_top=df_head)
 
     # Lire les premières lignes brutes pour récupérer le titre du 1er compte (avant l'en-tête)
-    df_top = pd.read_excel(file_path, header=None, nrows=header_row + 1, dtype=str)
+    if df_head is not None and len(df_head) >= (header_row + 1):
+        df_top = df_head.iloc[: header_row + 1].copy()
+    else:
+        df_top = _read_excel_head(file_path, header_row + 1)
+        if df_top is None:
+            df_top = pd.DataFrame()
     first_compte = ""
     first_libelle = ""
     for i in range(header_row):
@@ -318,7 +335,8 @@ def process_gl(
 
     try:
         log_step(f"Lecture GL: {file_path}")
-        source_format = _detect_gl_source_format(file_path)
+        df_head = _read_excel_head(file_path, 40)
+        source_format = _detect_gl_source_format(file_path, df_top=df_head)
         log_step(f"Format source GL détecté: {source_format}")
         if source_format == "sage":
             df_raw = _load_gl_sage(file_path)

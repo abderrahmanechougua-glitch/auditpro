@@ -3,7 +3,7 @@ Module : Centralisation TVA
 Wrapper pour extract_tva_v3.py — Extraction déclarations TVA DGI Maroc
 Place extract_tva_v3.py dans ce dossier pour activer.
 """
-import sys, os, importlib
+import sys
 import importlib.util
 import pandas as pd
 from pathlib import Path
@@ -12,6 +12,10 @@ from modules.base_module import BaseModule, ModuleInput, ModuleResult
 
 
 class CentralisationTVA(BaseModule):
+
+    _cached_script_path: str | None = None
+    _cached_script_mtime_ns: int | None = None
+    _cached_script_module = None
 
     name = "Centralisation TVA"
     description = (
@@ -63,6 +67,32 @@ class CentralisationTVA(BaseModule):
     def preview(self, inputs):
         return None  # PDF → pas de preview tableau
 
+    @classmethod
+    def _load_script_module(cls, script: Path):
+        script = script.resolve()
+        mtime_ns = script.stat().st_mtime_ns
+
+        if (
+            cls._cached_script_module is not None
+            and cls._cached_script_path == str(script)
+            and cls._cached_script_mtime_ns == mtime_ns
+        ):
+            return cls._cached_script_module
+
+        module_name = "modules.tva.tva_script"
+        spec = importlib.util.spec_from_file_location(module_name, str(script))
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Impossible de charger le script TVA : {script.name}")
+
+        tva_mod = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = tva_mod
+        spec.loader.exec_module(tva_mod)
+
+        cls._cached_script_module = tva_mod
+        cls._cached_script_path = str(script)
+        cls._cached_script_mtime_ns = mtime_ns
+        return tva_mod
+
     def execute(self, inputs, output_dir, progress_callback=None):
         try:
             bridge = get_skills_bridge()
@@ -82,17 +112,12 @@ class CentralisationTVA(BaseModule):
                 return ModuleResult(success=False,
                     message="Aucun script TVA trouvé. Placez tvaV55.py ou extract_tva_v3.py dans modules/tva/")
 
-            tva_mod.OUTPUT_DIR = Path(output_dir)
-
             if progress_callback: progress_callback(5, "Chargement du module TVA...")
 
-            spec = importlib.util.spec_from_file_location("modules.tva.tva_script", str(script))
-            if spec is None or spec.loader is None:
-                return ModuleResult(success=False,
-                    errors=[f"Impossible de charger le script TVA : {script.name}"])
-            tva_mod = importlib.util.module_from_spec(spec)
-            sys.modules[spec.name] = tva_mod
-            spec.loader.exec_module(tva_mod)
+            try:
+                tva_mod = self._load_script_module(script)
+            except Exception as e:
+                return ModuleResult(success=False, errors=[str(e)])
 
             tva_mod.OUTPUT_DIR = Path(output_dir)
 
@@ -147,7 +172,8 @@ class CentralisationTVA(BaseModule):
             detail_profile = bridge.profile_xlsx(str(detail_out)) if detail_out.exists() else {}
 
             try:
-                detail_df = pd.read_excel(detail_out)
+                # Validation sur échantillon pour éviter une lecture disque complète sur gros exports.
+                detail_df = pd.read_excel(detail_out, nrows=4000)
                 quality = bridge.validate_excel_data(detail_df)
                 xlsx_warnings.extend(quality.get("warnings", [])[:4])
             except Exception as quality_error:
