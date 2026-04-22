@@ -1,0 +1,45 @@
+{
+  "architecture": {
+    "app_root": "AuditPro/",
+    "entry_point": "AuditPro/main.py",
+    "ai_layer_root": "AuditPro_Agent/",
+    "ai_entry_point": "AuditPro_Agent/server.py",
+    "shared_assets": "AuditPro_SHARE/",
+    "core_utilities": "AuditPro/core/",
+    "modules_folder": "AuditPro/modules/",
+    "ui_folder": "AuditPro/ui/"
+  },
+  "tech_stack": {
+    "language": "Python 3.x",
+    "desktop_ui": "PyQt6",
+    "ai_framework": "FastAPI + Ollama (llama3.2)",
+    "data_libs": ["pandas", "openpyxl"],
+    "packaging": ["PyInstaller", "Inno Setup"]
+  },
+  "modules": {
+    "TVA": "Centralisation des déclarations TVA",
+    "CNSS": "Centralisation des bordereaux CNSS",
+    "Lettrage": "Lettrage automatique du grand livre",
+    "Retraitement": "Retraitement comptable",
+    "Circularisation": "Génération des lettres de circularisation",
+    "SRM_Generator": "Génération de rapports SRM",
+    "Extraction_Factures": "Extraction des données de factures",
+    "Extraction_IR": "Extraction des données IR"
+  },
+  "conventions": [
+    "UI strings in French; code identifiers in English",
+    "Each module lives in its own sub-folder under AuditPro/modules/",
+    "AI endpoints exposed via FastAPI in AuditPro_Agent/server.py"
+  ],
+  "patterns": [],
+  "decisions": [
+    "Chose Ollama/llama3.2 for fully offline, on-premise AI processing",
+    "Chose PyQt6 for the desktop UI for native cross-platform look"
+  ],
+  "key_files": {
+    "AuditPro/main.py": "Desktop application entry point",
+    "AuditPro_Agent/server.py": "FastAPI REST API + Ollama integration",
+    "AuditPro_Agent/client.py": "Python client example for the API"
+  },
+  "module_notes": {}
+}
