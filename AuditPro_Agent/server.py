@@ -15,6 +15,8 @@ import requests
 import json
 import shutil
 import tempfile
+from datetime import datetime, timedelta
+from uuid import uuid4
 from typing import Optional, List, Dict, Any
 
 # ── Configuration ─────────────────────────────────────────
@@ -192,6 +194,7 @@ def root():
             "modules": "/modules",
             "execute": "/execute/{module_name}",
             "upload": "/upload",
+            "reconciliation_bg_liasse": "/api/reconciliation/bg-liasse",
             "analyze": "/analyze",
             "health": "/health",
             "docs": "/docs"
@@ -422,6 +425,79 @@ async def upload_file(file: UploadFile = File(...)):
             "detected_modules": [],
             "error": str(e)
         }
+
+
+def _get_module_by_name(module_name: str):
+    if not registry:
+        return None
+    for name in registry.names():
+        if name.lower() == module_name.lower():
+            return registry.get(name)
+    return None
+
+
+def _persist_upload(target_dir: Path, upload: UploadFile) -> Path:
+    target_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = Path(upload.filename or "upload.bin").name
+    file_path = target_dir / safe_name
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(upload.file, f)
+    return file_path
+
+
+def _cleanup_old_reconciliation_uploads(base_dir: Path, max_age_hours: int = 24) -> None:
+    if not base_dir.exists():
+        return
+    cutoff = datetime.now() - timedelta(hours=max_age_hours)
+    for child in base_dir.iterdir():
+        if not child.is_dir():
+            continue
+        try:
+            modified_at = datetime.fromtimestamp(child.stat().st_mtime)
+            if modified_at < cutoff:
+                shutil.rmtree(child, ignore_errors=True)
+        except Exception as exc:
+            logger.warning(f"Cleanup skipped for {child}: {exc}")
+
+
+@app.post("/api/reconciliation/bg-liasse")
+async def reconcile_bg_liasse(
+    bg_file: UploadFile = File(...),
+    liasse_file: UploadFile = File(...),
+):
+    """Upload BG + Liasse et exécute la réconciliation."""
+    if not registry:
+        raise HTTPException(status_code=503, detail="AuditPro modules not loaded")
+
+    module = _get_module_by_name("Réconciliation BG-Liasse")
+    if not module:
+        raise HTTPException(status_code=404, detail="Module Réconciliation BG-Liasse non chargé")
+
+    reconciliation_upload_dir = AUDITPRO_DIR / "uploads" / "reconciliation_bg_liasse"
+    _cleanup_old_reconciliation_uploads(reconciliation_upload_dir)
+
+    run_dir = reconciliation_upload_dir / uuid4().hex
+    bg_path = _persist_upload(run_dir, bg_file)
+    liasse_path = _persist_upload(run_dir, liasse_file)
+
+    valid, errors = module.validate({"fichier_bg": str(bg_path), "fichier_liasse": str(liasse_path)})
+    if not valid:
+        raise HTTPException(status_code=400, detail="; ".join(errors))
+
+    result = module.execute(
+        {"fichier_bg": str(bg_path), "fichier_liasse": str(liasse_path)},
+        str(run_dir),
+    )
+    if not result.success:
+        raise HTTPException(status_code=500, detail=result.message or "; ".join(result.errors))
+
+    return {
+        "success": True,
+        "report_path": result.output_path,
+        "summary": result.stats,
+        "message": result.message,
+        "warnings": result.warnings,
+    }
 
 
 @app.post("/analyze")
