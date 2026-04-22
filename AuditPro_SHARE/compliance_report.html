@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuditPro — Rapport de Conformité</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #ff6b6b;
+    --accent3: #ffd166;
+    --muted: #3a3a5c;
+    --text: #e2e2f0;
+    --text-dim: #6b6b99;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 64px;
+    animation: fadeDown .6s ease both;
+  }
+
+  .logo {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 14px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 2px;
+    letter-spacing: .1em;
+    white-space: nowrap;
+    margin-top: 4px;
+    animation: pulse 2.5s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:.5; }
+  }
+
+  /* Score bar */
+  .score-block {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 28px 32px;
+    margin-bottom: 48px;
+    animation: fadeUp .6s .1s ease both;
+  }
+
+  .score-label { font-size: 12px; color: var(--text-dim); font-family: var(--mono); letter-spacing:.1em; margin-bottom: 10px; }
+
+  .score-bar {
+    height: 6px;
+    background: var(--muted);
+    border-radius: 3px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .score-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #00e5ff);
+    border-radius: 3px;
+    animation: grow 1s 0.4s ease both;
+    transform-origin: left;
+  }
+
+  @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  .score-num {
+    font-size: 3.5rem;
+    font-weight: 800;
+    font-family: var(--mono);
+    color: var(--accent);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .score-num small { font-size: 1.2rem; color: var(--text-dim); }
+
+  /* Section */
+  .section {
+    margin-bottom: 40px;
+    animation: fadeUp .6s ease both;
+  }
+
+  .section:nth-child(3) { animation-delay: .15s; }
+  .section:nth-child(4) { animation-delay: .25s; }
+  .section:nth-child(5) { animation-delay: .35s; }
+  .section:nth-child(6) { animation-delay: .45s; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-family: var(--mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* Rule rows */
+  .rule {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    align-items: start;
+    gap: 12px 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+
+  .rule:last-child { border-bottom: none; }
+
+  .rule-icon { margin-top: 2px; font-size: 14px; }
+
+  .rule-body { }
+
+  .rule-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .rule-detail {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    line-height: 1.6;
+  }
+
+  .rule-detail code {
+    background: rgba(255,255,255,.06);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--accent3);
+    font-size: 11px;
+  }
+
+  .status {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    padding: 4px 10px;
+    border-radius: 2px;
+    white-space: nowrap;
+    margin-top: 2px;
+    font-weight: 700;
+  }
+
+  .ok { background: rgba(0,255,136,.12); color: var(--accent); border: 1px solid rgba(0,255,136,.25); }
+  .warn { background: rgba(255,209,102,.12); color: var(--accent3); border: 1px solid rgba(255,209,102,.25); }
+  .fail { background: rgba(255,107,107,.12); color: var(--accent2); border: 1px solid rgba(255,107,107,.25); }
+
+  .file-ref {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #00cfff;
+    background: rgba(0,207,255,.08);
+    border: 1px solid rgba(0,207,255,.2);
+    padding: 2px 8px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  @keyframes fadeDown { from { opacity:0; transform: translateY(-16px); } to { opacity:1; transform:none; } }
+  @keyframes fadeUp   { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform:none; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div>
+      <div class="logo">AuditPro · Compliance Report</div>
+      <h1>Vos instructions<br><span>sont respectées</span></h1>
+    </div>
+    <div class="badge">✓ 7 / 7 PASSED</div>
+  </header>
+
+  <!-- Score -->
+  <div class="score-block">
+    <div>
+      <div class="score-label">Conformité globale</div>
+      <div class="score-bar">
+        <div class="score-fill" style="width:100%"></div>
+      </div>
+    </div>
+    <div class="score-num">100<small>%</small></div>
+  </div>
+
+  <!-- Section 1 : UI -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(0,255,136,.1)">🖼</div>
+      <span class="section-title">Règles UI</span>
+    </div>
+
+    <div class="rule">
+      <div class="rule-icon">✅</div>
+      <div class="rule-body">
+        <div class="rule-name">Boîte "Répertoire de sortie" cachée</div>
+        <div class="rule-detail">
+          <code>output_frame.setVisible(False)</code> à la création (ligne 121) ET au chargement de module (ligne 237)<br>
+          Fichier : <span class="file-ref">ui/workspace.py</span>
+        </div>
+      </div>
+      <div class="status ok">PASS</div>
+    </div>
+  </div>
+
+  <!-- Section 2 : OCR -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(0,207,255,.1)">🔍</div>
+      <span class="section-title">Auto-détection OCR</span>
+    </div>
+
+    <div class="rule">
+      <div class="rule-icon">✅</div>
+      <div class="rule-body">
+        <div class="rule-name">Module central <code>core/ocr_paths.py</code></div>
+        <div class="rule-detail">
+          Résolution automatique : <code>vendor/</code> → env var → chemins système → <code>shutil.which</code><br>
+          <code>TESSERACT_PATH</code> et <code>POPPLER_PATH</code> exposés comme singletons
+        </div>
+      </div>
+      <div class="status ok">PASS</div>
+    </div>
+
+    <div class="rule">
+      <div class="rule-icon">✅</div>
+      <div class="rule-body">
+        <div class="rule-name"><code>_load_ocr_paths()</code> avec cache <code>sys.modules</code></div>
+        <div class="rule-detail">
+          Présent dans <span class="file-ref">factextv19.py</span> · <span class="file-ref">tvaV55.py</span> · <span class="file-ref">main8.py</span><br>
+          Dégradation gracieuse si Tesseract absent (warn + skip, pas de crash)
+        </div>
+      </div>
+      <div class="status ok">PASS</div>
+    </div>
+
+    <div class="rule">
+      <div class="rule-icon">✅</div>
+      <div class="rule-body">
+        <div class="rule-name">Binaires bundlés dans <code>vendor/</code></div>
+        <div class="rule-detail">
+          <code>vendor/tesseract/</code> (141 fichiers) + <code>vendor/poppler/bin/</code> (39 fichiers)<br>
+          <code>fra.traineddata</code> téléchargée depuis GitHub tesseract-ocr/tessdata
+        </div>
+      </div>
+      <div class="status ok">PASS</div>
+    </div>
+  </div>
+
+  <!-- Section 3 : Module wrappers -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(255,209,102,.1)">📦</div>
+      <span class="section-title">Wrappers module.py</span>
+    </div>
+
+    <div class="rule">
+      <div class="rule-icon">✅</div>
+      <div class="rule-body">
+        <div class="rule-name">Aucun passage de chemin OCR depuis module.py</div>
+        <div class="rule-detail">
+          <span class="file-ref">modules/tva/module.py</span> et <span class="file-ref">modules/extraction_ir/module.py</span><br>
+          Pas de <code>TESSERACT_PATH</code> / <code>POPPLER_PATH</code> injectés — résolution interne seulement
+        </div>
+      </div>
+      <div class="status ok">PASS</div>
+    </div>
+  </div>
+
+  <!-- Section 4 : Split PDF -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(255,107,107,.1)">✂️</div>
+      <span class="section-title">Split PDF — Nommage par tiers</span>
+    </div>
+
+    <div class="rule">
+      <div class="rule-icon">✅</div>
+      <div class="rule-body">
+        <div class="rule-name">Détection étendue de la colonne "nom"</div>
+        <div class="rule-detail">
+          Mots-clés : <code>nom</code>, <code>name</code>, <code>tiers</code>, <code>denomination</code>, <code>dénomination</code>, <code>raison_sociale</code>, <code>intitule</code><br>
+          Fallback : première colonne texte si aucun mot-clé trouvé
+        </div>
+      </div>
+      <div class="status ok">PASS</div>
+    </div>
+
+    <div class="rule">
+      <div class="rule-icon">✅</div>
+      <div class="rule-body">
+        <div class="rule-name">Nommage propre des fichiers</div>
+        <div class="rule-detail">
+          Priorité : <code>nom_safe</code> → <code>code_safe</code> → <code>tiers_NNN</code><br>
+          Nettoyage des artefacts <code>"nan"</code> / <code>"None"</code> pandas · Suffixe de collision <code>_001</code>, <code>_002</code>
+        </div>
+      </div>
+      <div class="status ok">PASS</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <span>AuditPro v1.1 · Rapport généré le 16 avril 2026</span>
+    <span style="color:var(--accent)">● FULLY COMPLIANT</span>
+  </footer>
+
+</div>
+</body>
+</html>

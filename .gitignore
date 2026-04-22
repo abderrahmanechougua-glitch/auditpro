@@ -1,0 +1,47 @@
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Build and distribution artifacts
+build/
+dist/
+**/build/
+**/dist/
+*.egg-info/
+*.pkg
+
+# Packaged app folders (generated)
+**/AuditPro_v*_Windows/
+**/_internal/
+
+# Binary/package outputs
+*.zip
+*.7z
+*.rar
+*.exe
+*.msi
+*.deb
+*.rpm
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# IDE/editor
+.vscode/
+.idea/
+*.code-workspace
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
