@@ -17,6 +17,12 @@ import pandas as pd
 from ui.preview_table import PreviewTable
 from modules.base_module import BaseModule, ModuleInput
 
+try:
+    from modules.circularisation.module import ETAPES as CIRC_ETAPES, INPUTS_PAR_ETAPE as CIRC_INPUTS_PAR_ETAPE
+except Exception:
+    CIRC_ETAPES = None
+    CIRC_INPUTS_PAR_ETAPE = {}
+
 
 class Workspace(QWidget):
     """Zone centrale de travail."""
@@ -306,11 +312,9 @@ class Workspace(QWidget):
 
         # ── Sélecteur d'étapes (si le module en a) ───
         etapes = getattr(module, "ETAPES", None)
-        # Chercher aussi dans le module Python importé
-        if etapes is None:
-            import modules.circularisation.module as circ_mod
-            if type(module).__name__ == "CircularisationTiers":
-                etapes = circ_mod.ETAPES
+        # Fallback circulaire pour modules qui exposent ETAPES via import tardif.
+        if etapes is None and type(module).__name__ == "CircularisationTiers" and CIRC_ETAPES is not None:
+            etapes = CIRC_ETAPES
         self._build_steps(etapes)
 
         # La box paramètres peut être visible si le module en a
@@ -425,8 +429,7 @@ class Workspace(QWidget):
             self.current_module.etape_active = etape_id
 
         # Recharger les inputs pour cette étape
-        from modules.circularisation.module import INPUTS_PAR_ETAPE
-        required_inputs = INPUTS_PAR_ETAPE.get(etape_id, [])
+        required_inputs = CIRC_INPUTS_PAR_ETAPE.get(etape_id, [])
 
         self._clear_inputs()
         if required_inputs:

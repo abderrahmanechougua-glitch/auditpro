@@ -56,6 +56,7 @@ class MainWindow(QMainWindow):
         self.current_output_dir = ""
         self.last_result = None
         self.last_run_success = None
+        self.available_modules = {}
         self.theme_name = "light"
         self.progress_toast: Toast | None = None
 
@@ -149,9 +150,9 @@ class MainWindow(QMainWindow):
         self.workspace.execute_requested.connect(self._on_execute)
 
     def _populate_modules(self):
-        modules = self.registry.get_all()
-        self.module_panel.set_modules(modules)
-        return modules
+        self.available_modules = self.registry.get_all()
+        self.module_panel.set_modules(self.available_modules)
+        return self.available_modules
 
     def _initialize_empty_state(self, modules):
         if not modules:
@@ -238,7 +239,7 @@ class MainWindow(QMainWindow):
     def _on_file_loaded(self, file_path: str):
         """Un fichier a été chargé (drop ou browse)."""
         # Détection automatique
-        modules = self.registry.get_all()
+        modules = self.available_modules or self.registry.get_all()
         detections = self.detector.detect(file_path, modules)
         self.current_file_path = file_path
         self.current_detections = detections
