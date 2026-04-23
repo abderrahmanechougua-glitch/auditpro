@@ -4,11 +4,32 @@ Spec PyInstaller pour AuditPro v1.1
 Build : pyinstaller AuditPro.spec
 """
 from pathlib import Path
+import importlib.util
 import sys
 
 ROOT = Path(SPECPATH)
 
 block_cipher = None
+
+
+def _is_installed(module_name: str) -> bool:
+    return importlib.util.find_spec(module_name) is not None
+
+
+optional_hiddenimports = []
+if _is_installed('pdfplumber'):
+    optional_hiddenimports += ['pdfplumber', 'pdfminer', 'pdfminer.high_level']
+if _is_installed('pdf2image'):
+    optional_hiddenimports += ['pdf2image']
+if _is_installed('pytesseract'):
+    optional_hiddenimports += ['pytesseract']
+if _is_installed('pypdf'):
+    optional_hiddenimports += ['pypdf', 'pypdf._reader']
+
+if optional_hiddenimports:
+    print(f"[AuditPro_Agent/AuditPro.spec] Optional hiddenimports enabled: {optional_hiddenimports}")
+else:
+    print("[AuditPro_Agent/AuditPro.spec] No optional heavy hiddenimports enabled")
 
 a = Analysis(
     [str(ROOT / 'main.py')],
@@ -37,10 +58,6 @@ a = Analysis(
         # Data
         'pandas', 'numpy', 'openpyxl', 'openpyxl.styles',
         'openpyxl.utils', 'openpyxl.chart',
-        # PDF / OCR
-        'pdfplumber', 'pdfminer', 'pdfminer.high_level',
-        'pdf2image', 'pytesseract',
-        'pypdf', 'pypdf._reader',
         # Word
         'docx', 'docx.shared', 'docx.enum.text',
         # Email
@@ -65,7 +82,7 @@ a = Analysis(
         'ui', 'ui.main_window', 'ui.workspace', 'ui.module_panel',
         'ui.assistant_panel', 'ui.preview_table', 'ui.profile_dialog',
         'ui.styles',
-    ],
+    ] + optional_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

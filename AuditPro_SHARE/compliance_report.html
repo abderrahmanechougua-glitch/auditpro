@@ -15,7 +15,10 @@
     --accent2: #ff6b6b;
     --accent3: #ffd166;
     --muted: #3a3a5c;
-    --text: #e2e2f0;
+    --text: #e2e2f0;    Invoke-RestMethod -Uri "http://127.0.0.1:8008/health" -Method Get | ConvertTo-Json -Depth 6
+    Invoke-RestMethod -Uri "http://127.0.0.1:8008/modules" -Method Get | ConvertTo-Json -Depth 4
+    Invoke-RestMethod -Uri "http://127.0.0.1:8008/models" -Method Get | ConvertTo-Json -Depth 4
+    Invoke-RestMethod -Uri "http://127.0.0.1:8008/chat" -Method Post -ContentType "application/json" -Body '{"message":"bonjour"}' -TimeoutSec 330
     --text-dim: #6b6b99;
     --mono: 'Space Mono', monospace;
     --sans: 'Syne', sans-serif;
