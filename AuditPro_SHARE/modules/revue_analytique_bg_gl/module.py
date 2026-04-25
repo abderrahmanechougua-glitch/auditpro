@@ -220,30 +220,32 @@ class RevueAnalytiqueBgGl(BaseModule):
 
             sheets_generated = 0
 
-            # === Génération des feuilles individuelles (4 chiffres) ===
+            # Les feuilles individuelles DOIVENT être créées (elles sont source pour les recap)
+            # On les génère toujours, mais on ne les compte que si le mode est sélectionné
+            _progress(35, "Génération des feuilles individuelles par compte (4 chiffres)…")
+
+            formula_builder = FormulaBuilder(
+                bg_col_map=reader.col_map,
+                bg_last_row=reader.last_data_row,
+                has_ref_col=reader.has_ref_col,
+                bg_sheet_name=reader.sheet_name or "BG",
+            )
+            writer = SheetWriter(
+                wb,
+                formula_builder=formula_builder,
+                replace_existing=True,
+                bg_rows=rows,
+                exercice=exercice,
+            )
+            total = len(aggregates)
+            for i, agg in enumerate(aggregates, 1):
+                writer.write_sheet(agg)
+                if i % 10 == 0 or i == total:
+                    pct = 35 + int(25 * i / total)
+                    _progress(pct, f"Feuilles individuelles générées : {i}/{total}")
+
+            # Compter les feuilles individuelles si le mode est sélectionné
             if generate_individual:
-                _progress(35, "Génération des feuilles individuelles par compte (4 chiffres)…")
-
-                formula_builder = FormulaBuilder(
-                    bg_col_map=reader.col_map,
-                    bg_last_row=reader.last_data_row,
-                    has_ref_col=reader.has_ref_col,
-                    bg_sheet_name=reader.sheet_name or "BG",
-                )
-                writer = SheetWriter(
-                    wb,
-                    formula_builder=formula_builder,
-                    replace_existing=True,
-                    bg_rows=rows,
-                    exercice=exercice,
-                )
-                total = len(aggregates)
-                for i, agg in enumerate(aggregates, 1):
-                    writer.write_sheet(agg)
-                    if i % 10 == 0 or i == total:
-                        pct = 35 + int(25 * i / total)
-                        _progress(pct, f"Feuilles individuelles générées : {i}/{total}")
-
                 sheets_generated = total
 
             # === Génération des feuilles récapitulatives (3 chiffres) ===
