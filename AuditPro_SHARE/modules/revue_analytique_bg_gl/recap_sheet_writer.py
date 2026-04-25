@@ -11,6 +11,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 
+from .poste_labels import get_poste_label
+
 
 class RecapitulativeSheetWriter:
     """
@@ -77,6 +79,7 @@ class RecapitulativeSheetWriter:
         Copie le contenu complet d'une feuille source vers une feuille destination.
 
         Copie: valeurs, formules, styles (font, fill, border, number_format, alignment).
+        Exclut la dernière ligne (commentaire analytique).
 
         source_ws: Feuille source (ex: feuille "6121")
         dest_ws: Feuille destination (ex: feuille "612")
@@ -85,8 +88,13 @@ class RecapitulativeSheetWriter:
         Retourne: Nombre de lignes copiées
         """
         rows_copied = 0
+        max_row = source_ws.max_row
 
         for row_idx, row in enumerate(source_ws.iter_rows(values_only=False), start=1):
+            # Exclure la dernière ligne (commentaire analytique)
+            if row_idx == max_row:
+                break
+
             dest_row_idx = start_row + row_idx - 1
             rows_copied = row_idx
 
@@ -122,11 +130,17 @@ class RecapitulativeSheetWriter:
         """
         Ajoute le titre de la feuille récapitulative.
 
-        Format: Colonne C, ligne 2, "Feuille récapitulative 612"
+        Format: Colonne C, ligne 2, "Feuille récapitulative 612 - Achats consommés..."
         Style: Gras, Arial 12, fond jaune
         """
+        poste_label = get_poste_label(poste_code)
+        if poste_label:
+            title = f"Feuille récapitulative {poste_code} - {poste_label}"
+        else:
+            title = f"Feuille récapitulative {poste_code}"
+
         title_cell = ws.cell(row=2, column=3)  # Colonne C
-        title_cell.value = f"Feuille récapitulative {poste_code}"
+        title_cell.value = title
         title_cell.font = self._title_font
         title_cell.fill = self._title_fill
 
